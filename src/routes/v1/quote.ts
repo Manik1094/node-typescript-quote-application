@@ -28,10 +28,18 @@ router.post('/', isAuth, Validators.createOrUpdateQuoteValidation, async (req: R
 //Get list of quotes
 router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const quotes = await QuoteRepo.getQuotes()
-    if(quotes.length < 0){
+
+    if (quotes.length < 0) {
         return next(new NotFoundError('Quotes does not exist..'))
     }
-    return next(new SuccessResponse('Success').send(res, quotes))
+    return next(new SuccessResponse('Success').send(res, quotes.map(quote => {
+        return {
+            _id: quote._id,
+            text: quote.text,
+            creator: quote.creator,
+            likes: quote.likes.length
+        }
+    })))
 })
 
 //Update Quote
@@ -52,7 +60,13 @@ router.put('/:quoteId', isAuth, Validators.createOrUpdateQuoteValidation,  async
         return next(new InternalError('Something went wrong, Please try again later'))
     }
 
-    return next(new SuccessResponse('Quote Updated.').send(res, _.pick(updatedQuote, ['_id', 'text', 'creator'])))
+    return next(new SuccessResponse('Quote Updated.').send(res, {
+        _id: updatedQuote._id,
+        text: updatedQuote.text,
+        creator: updatedQuote.creator,
+        likes: updatedQuote.likes.length
+
+    }))
 })
 
 //Delete Quote
@@ -75,6 +89,29 @@ router.delete('/:quoteId', isAuth,  async (req: Request, res: Response, next: Ne
     return next(new SuccessResponse('Quote deleted').send(res, _.pick(deletedQuote, ['_id', 'text', 'creator'])))
 
 })
+
+//Likes
+router.post('/like/:quoteId', isAuth, async (req: Request, res: Response, next: NextFunction) => {
+    const { userId } = res.locals
+    const quoteId: string = req.params.quoteId
+    const quote = await QuoteRepo.findQuote(quoteId)
+    if (!quote) {
+        return next(new NotFoundError('Quote does not exists for this id..'))
+    }
+    const updatedQuote = await QuoteRepo.addOrRemoveLike(quote, userId)
+    if(!updatedQuote){
+        return next(new InternalError('Something went wrong...'))
+    }
+    return next(new SuccessResponse('Likes updated').send(res, {
+        _id: updatedQuote._id,
+        text: updatedQuote.text,
+        creator: updatedQuote.creator,
+        likes: updatedQuote.likes.length
+    }))
+})
+
+//Comments
+
 
 
 

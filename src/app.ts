@@ -14,8 +14,8 @@
 import express, { Request, Response, NextFunction } from 'express'
 import bodyParser from 'body-parser'
 import { NotFoundError, ApiError } from './core/ApiError'
-import authRoutes from './routes/access/auth'
-import quoteRoutes from './routes/quote/quote'
+import authRoutes from './routes/v1/auth'
+import quoteRoutes from './routes/v1/quote'
 
 const app = express()
 app.use(bodyParser.json())

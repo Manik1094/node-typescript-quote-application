@@ -1,8 +1,10 @@
-import mongoose, { Schema, Document } from 'mongoose'
+import mongoose, { Schema, Document, Mongoose } from 'mongoose'
+import { User } from './User'
 
 export  interface Quote extends Document {
     text: string, 
-    creator: Schema.Types.ObjectId
+    creator: User, 
+    likes: User[]
 }
 
 const QuoteSchema = new mongoose.Schema({
@@ -14,7 +16,15 @@ const QuoteSchema = new mongoose.Schema({
         type: Schema.Types.ObjectId, 
         ref: 'User', 
         required: true
-    }
+    }, 
+    likes: [
+        {
+            type: Schema.Types.ObjectId, 
+            ref: 'User', 
+            required: true,
+        }
+    ]
     
 }, { timestamps: true })
+
 export const QuoteModel = mongoose.model<Quote>('Quote', QuoteSchema, 'quotes')
