@@ -7,8 +7,9 @@ import UserRepo from '../../database/repository/UserRepo'
 import QuoteRepo from '../../database/repository/QuoteRepo'
 import { Quote } from '../../database/models/Quote'
 import _ from 'lodash'
-import { CommentModel, Comment } from '../../database/models/Comment'
-import mongoose from 'mongoose'
+import {  Comment } from '../../database/models/Comment'
+import { User } from '../../database/models/User'
+
 
 const router = Router()
 
@@ -113,6 +114,20 @@ router.post('/like/:quoteId', isAuth, async (req: Request, res: Response, next: 
     }))
 })
 
+//Get Likes of Quote
+router.get('/like/:quoteId', isAuth, async (req: Request, res: Response, next: NextFunction) => {
+    const { userId } = res.locals
+    const quoteId = req.params.quoteId
+    const quote = await QuoteRepo.findQuote(quoteId) as Quote
+    if(!quote){
+        return next(new NotFoundError('Quote does not exists for this id.'))
+    }
+    const likes = await QuoteRepo.getLikes(quote) as User[]
+    if(likes.length <= 0){
+        return next(new NotFoundError('No likes found for this quote.'))
+    }
+    return next(new SuccessResponse('success').send(res, likes))
+})
 
 
 //Add Comments

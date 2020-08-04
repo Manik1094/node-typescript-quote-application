@@ -1,8 +1,8 @@
 
 import { Quote, QuoteModel } from '../models/Quote'
 import UserRepo from './UserRepo'
-import mongoose, { isValidObjectId, Schema, Mongoose } from 'mongoose'
-import { UserModel, User } from '../models/User'
+import  { isValidObjectId, Schema, Mongoose } from 'mongoose'
+import {  User, UserModel } from '../models/User'
 import _ from 'lodash'
 import { CommentModel, Comment } from '../models/Comment'
 
@@ -76,6 +76,13 @@ export default class QuoteRepo {
             .lean<Quote>()
             .exec()
         }
+    }
+
+    public static async getLikes(quote: Quote): Promise<User[]>{
+        return UserModel.find({_id: {$in: quote.likes}})
+        .select('name')
+        .lean<User>()
+        .exec()
     }
 
     public static async addComment(quote: Quote, userId: string, text: string): Promise<Quote | null>{
