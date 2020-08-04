@@ -48,5 +48,16 @@ export default class Validators {
         next()
     }
 
+    static commentValidation(req: Request, res: Response, next: NextFunction){
+        
+        if (typeof req.body.text === 'undefined') {
+            next(new BadRequestError('Keys missing.'))
+        }
+        if (validator.isEmpty(req.body.text)) {
+            next(new BadRequestError('Quote cannot be empty'))
+        }
+        next()
+    }
+
 
 }

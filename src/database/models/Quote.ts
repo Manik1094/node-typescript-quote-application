@@ -1,10 +1,15 @@
 import mongoose, { Schema, Document, Mongoose } from 'mongoose'
 import { User } from './User'
+import { Comment } from './Comment'
+
+
 
 export  interface Quote extends Document {
     text: string, 
     creator: User, 
-    likes: User[]
+    likes: User[], 
+    comments: Comment[]
+   
 }
 
 const QuoteSchema = new mongoose.Schema({
@@ -22,6 +27,13 @@ const QuoteSchema = new mongoose.Schema({
             type: Schema.Types.ObjectId, 
             ref: 'User', 
             required: true,
+        }
+    ], 
+    comments: [
+        {
+            type: Schema.Types.ObjectId, 
+            ref: 'Comment', 
+            required: true
         }
     ]
     

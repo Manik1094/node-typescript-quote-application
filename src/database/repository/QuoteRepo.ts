@@ -4,6 +4,7 @@ import UserRepo from './UserRepo'
 import mongoose, { isValidObjectId, Schema, Mongoose } from 'mongoose'
 import { UserModel, User } from '../models/User'
 import _ from 'lodash'
+import { CommentModel, Comment } from '../models/Comment'
 
 
 export default class QuoteRepo {
@@ -13,7 +14,8 @@ export default class QuoteRepo {
         const quote = new QuoteModel({
             text: text,
             creator: userId,
-            likes: []
+            likes: [], 
+            comments: []
         })
         const createdQuote = await quote.save()
         const user = await UserRepo.addQuote(userId, createdQuote)
@@ -25,6 +27,7 @@ export default class QuoteRepo {
         return QuoteModel.find()
             .populate('creator', 'name')
             .populate('likes')
+            .populate('comments')
             .select('_id text')
             .sort({ createdAt: -1 })
             .lean<Quote>()
@@ -74,5 +77,57 @@ export default class QuoteRepo {
             .exec()
         }
     }
-   
+
+    public static async addComment(quote: Quote, userId: string, text: string): Promise<Quote | null>{
+        const newComment = new CommentModel({
+            text: text, 
+            creator: userId, 
+            quoteId: quote._id
+        })
+        const comment = await newComment.save()
+        quote.comments.push(comment)
+        console.log(`Comments: ${quote.comments}`)
+        return QuoteModel.findOneAndUpdate({_id: quote._id}, {comments: quote.comments}, {new: true})
+        .lean<Quote>()
+        .exec()
+    }
+
+    public static async getComments(quote: Quote): Promise<Comment[] | null> {
+        return CommentModel.find({ _id: { $in: quote.comments } })
+            .populate('creator', 'name')
+            .select('_id text')
+            .lean<Comment>()
+            .exec()
+
+    }
+
+    public static async findComment(commentId: string): Promise<Comment | null> {
+        console.log(`Comment id: ${commentId}`)
+        if (isValidObjectId(commentId)) {
+            return CommentModel.findOne({ _id: commentId }).lean<Comment>().exec()
+        } else {
+            console.log('Inside else')
+            return null
+        }
+    }
+
+    public static async deleteComment(comment: Comment, quote: Quote) {
+        const deletedComment = await CommentModel.findOneAndDelete({ _id: comment._id })
+        if (!deletedComment) {
+            return null
+        }
+
+        const matchedComment = quote.comments.filter(cm => {
+            return cm._id.toString() === comment._id.toString()
+        })
+        if (matchedComment.length <= 0) {
+            return null
+        }
+
+        var updatedComments = _.remove(quote.comments, (n) => n._id.toString() !== matchedComment[0]._id.toString())
+        return QuoteModel.findOneAndUpdate({ _id: quote._id }, { comments: updatedComments }, { new: true })
+            .lean<Quote>()
+            .exec()
+    }
+
 }
